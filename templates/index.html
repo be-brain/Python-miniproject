@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+        crossorigin="anonymous">
+    </script>
+
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.1/font/bootstrap-icons.css">
+    <title>자기소개</title>
+
+    <style>
+        *{
+            color: white;
+            background-color: black;
+            font-family: 'Jua', sans-serif;
+        }
+        .all{
+            width: 100%; height: 100%;
+            background-color: black;
+        }
+
+        /*현재기온*/
+        .weather{
+            width: 95%; max-width: 500px;
+            height: 100%;
+            display: inline-flex;
+            flex-direction: row;
+            justify-content: left;
+        }
+        .weather > i{
+            padding-left: 20px;
+            padding-top: 50px;
+        }
+        .weather > p{
+            padding-left: 20px;
+            padding-top: 50px;
+        }
+
+        /*자기소개*/
+        .maincard{
+            width: 95%;
+            max-width: 500px;
+            margin: 0 auto;
+            box-shadow: 1px 5px 15px 3px #999;
+        }
+        .card-title{
+            text-align: center;
+        }
+        .card-body >ul >li, p{
+            list-style: square;
+            padding-top: 10px;
+        }
+
+        /*댓글입력창*/
+        .mypost {
+            width: 95%;
+            max-width: 500px;
+            margin: 20px auto;
+            box-shadow: 0px 1px 5px 1px white;
+            border-radius: 5px;
+            padding: 20px;
+        }
+        .form-floating mb-3, .form-floating{
+            border-radius: 20px;
+        }
+        .mypost > button {
+            margin-top: 15px;
+            border: 1px solid white;
+        }
+        label{
+            color: black;
+            background-color: transparent;
+        }
+
+        /*댓글목록*/
+        .mycards {
+            width: 95%;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .card{
+            margin: 10px;
+            border: none;
+        }
+        .blockquote-footer{
+            float: right;
+        }
+        .btn-light{
+            background-color: transparent;
+            border-radius: 20%;
+            font-size: 5px;
+            color: white;
+            float: right;
+        }
+
+    </style>
+    <script>
+        $(document).ready(function(){
+            set_temp()
+            set_cloud()
+            show_comment()
+        });
+        function set_temp(){
+            $.ajax({
+                type: "GET",
+                url: "http://spartacodingclub.shop/sparta_api/weather/seoul",
+                data: {},
+                success: function (response) {
+                    $('#temp').text(response['temp'])
+                }
+            })
+        }
+
+        //날씨
+        function set_cloud(){
+            $.ajax({
+                type: "GET",
+                url: "https://api.openweathermap.org/data/2.5/weather?q=seoul&appid=ab2d28805384c99f85017b405ab63c00",
+                data: {},
+                success: function (response) {
+                    let sky = response.weather[0].main
+                    if(sky === 'Clear'){
+                        $('.sky').append("<i class=\"bi bi-brightness-high\"></i>")
+                    }else if(sky === 'Wind'){
+                        $('.sky').append("<i class=\"bi bi-wind\"></i>")
+                    }else if(sky === 'Clouds'){
+                        $('.sky').append(" <i class=\"bi bi-clouds\"></i>")
+                    }else if(sky === 'Rain'){
+                        $('.sky').append("<i class=\"bi bi-cloud-rain-fill\"></i>")
+                    }else if(sky === 'Snow'){
+                        $('.sky').append("<i class=\"bi bi-snow2\"></i>")
+                    }
+                }
+            })
+        }
+
+        function save_comment(){
+            let name = $('#name').val()
+            let comment = $('#comment').val()
+            $.ajax({
+                type: 'POST',
+                url: '/ha',
+                data: {name_give:name, comment_give:comment},
+                success: function (response) {
+                    alert(response['msg'])
+                    window.location.reload()
+                }
+            })
+        }
+        function show_comment(){
+            $.ajax({
+                type: 'GET',
+                url: '/ha',
+                data: {},
+                success: function (response) {
+                    let rows = response['comments']
+                    for (let i = 0; i < rows.length; i++) {
+                        let name = rows[i]['name']
+                        let comment = rows[i]['comment']
+                        let num = rows[i]['num']
+                        let done = rows[i]['done']
+
+                        let temp_html = ``
+                        if (done == 0) {
+                            temp_html = `<div class="card">
+                                            <div class="comment_card">
+                                                <blockquote class="blockquote mb-0">
+                                                    <button onclick="delete_comment(${num})" type="button" class="btn-light">X</button>
+                                                    <p>${comment}</p>
+                                                    <footer class="blockquote-footer">${name}</footer>
+                                                </blockquote>
+                                            </div>
+                                         </div>`
+                        } else {
+                            temp_html = ``
+                        }
+                        $('#comment-list').append(temp_html)
+                    }
+                }
+            })
+        }
+        function delete_comment(num){
+            $.ajax({
+                type: "POST",
+                url: "/ha/done",
+                data: {num_give:num},
+                success: function (response) {
+                    alert(response["msg"])
+                    window.location.reload()
+                }
+            });
+        }
+    </script>
+</head>
+
+<body>
+    <div class="all">
+        <div class="weather">
+            <i class="bi bi-thermometer-half"></i>
+            <p class="temperature">현재기온 : <span id="temp"></span>℃</p>
+            <p class="sky">날씨 : </p>
+        </div>
+        <div class="maincard">
+            <img class="card-img-top" src="https://ifh.cc/g/YLpLVO.jpg" alt="">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-reception-4"></i> 김채하</h5>
+                <ul>
+                    <li>장래희망 : 멋진 프론트엔드 개발자 <i class="bi bi-pc-display-horizontal"></i></li>
+                    <li>장래희망둘 : 노트북 하나만 들고 세계 곳곳을 누비는 디지털노마드</li>
+                    <li>취미 : 음악감상 <i class="bi bi-earbuds"></i>, 공포영화보기 <i class="bi bi-film"></i></li>
+                    <li>MBTI : INT?</li>
+                </ul>
+                <p>"도전과 변화를 즐깁니다 팀 프로젝트를 하면서 생각지도 못한 아이디어를 많이 배워갈 수 있을 것 같아 기대돼요"</p>
+            </div>
+        </div>
+        <div class="mypost">
+            <div class="form-floating mb-3">
+                <input type="text" class="form-control" id="name" placeholder="url">
+                <label for="floatingInput">닉네임</label>
+            </div>
+            <div class="form-floating">
+                <textarea class="form-control" placeholder="Leave a comment here" id="comment"
+                    style="height: 100px"></textarea>
+                <label for="floatingTextarea2">응원댓글</label>
+            </div>
+            <button onclick="save_comment()" type="button" class="btn btn-dark">응원 남기기</button>
+        </div>
+        <div class="mycards" id="comment-list">
+        </div>
+    </div>
+</body>
+
+</html>
